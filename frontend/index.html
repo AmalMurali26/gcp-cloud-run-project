@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Infrastructure Test App</title>
+    <style>
+        :root {
+            --bg: #f4f5f7;
+            --card-bg: #ffffff;
+            --text-main: #172b4d;
+            --text-muted: #5e6c84;
+            --primary: #091e42;
+            --accent: #0052cc;
+            --border: #e2e8f0;
+            --success: #22c55e;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 520px;
+        }
+
+        header {
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 6px 0;
+            color: var(--primary);
+        }
+
+        p.subtitle {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--success);
+            margin-bottom: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            padding: 6px 0;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.15s ease;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.15s ease;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 8px;
+            background-color: #fafbfc;
+        }
+
+        li .item-name {
+            font-weight: 600;
+        }
+
+        li .item-email {
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+            padding: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <h1>Test Environment Dashboard</h1>
+            <p class="subtitle">Cloud deployment verification & learning project</p>
+        </header>
+
+        <!-- System Node Health -->
+        <div class="card">
+            <div id="status-indicator" class="status-badge">
+                <span class="status-dot"></span> Checking backend connection...
+            </div>
+            <div id="metrics-container">
+                <div class="metric-row"><span>Redis Hits:</span> <span id="redis-count">-</span></div>
+                <div class="metric-row"><span>PostgreSQL DB:</span> <span id="db-status">-</span></div>
+            </div>
+        </div>
+
+        <!-- Entry Form -->
+        <div class="card">
+            <form id="personForm">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" required placeholder="e.g. Test User">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required placeholder="test@example.com">
+                </div>
+                <button type="submit">Submit Entry</button>
+            </form>
+        </div>
+
+        <!-- Database Records -->
+        <div class="card">
+            <div style="font-weight: 600; font-size: 13px; margin-bottom: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Saved Test Records</div>
+            <ul id="peopleList">
+                <li class="empty-state">Loading entries...</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = ''; 
+
+        function loadSystemStatus() {
+            fetch(`${API_BASE}/api/v1/data`)
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    return res.json();
+                })
+                .then(data => {
+                    document.getElementById('status-indicator').innerHTML = `
+                        <span class="status-dot"></span> Backend Services Online
+                    `;
+                    document.getElementById('redis-count').textContent = `${data.redis_visit_count} visits`;
+                    document.getElementById('db-status').textContent = data.database_status;
+                }).catch(err => {
+                    console.error("System health check failed:", err);
+                    document.getElementById('status-indicator').style.color = 'var(--danger)';
+                    document.getElementById('status-indicator').innerHTML = `
+                        <span class="status-dot" style="background-color: var(--danger)"></span> Service Disconnected
+                    `;
+                });
+        }
+
+        function loadPeopleList() {
+            fetch(`${API_BASE}/api/v1/people`)
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    return res.json();
+                })
+                .then(resData => {
+                    const listElement = document.getElementById('peopleList');
+                    let records = [];
+                    if (resData && Array.isArray(resData.data)) {
+                        records = resData.data;
+                    } else if (Array.isArray(resData)) {
+                        records = resData;
+                    }
+
+                    if (records.length > 0) {
+                        listElement.innerHTML = records.map(item => `
+                            <li>
+                                <span class="item-name">${item.name}</span>
+                                <span class="item-email">${item.email}</span>
+                            </li>
+                        `).join('');
+                    } else {
+                        listElement.innerHTML = '<li class="empty-state">No entries registered yet.</li>';
+                    }
+                }).catch(err => {
+                    console.error("Failed to fetch records:", err);
+                    document.getElementById('peopleList').innerHTML = '<li class="empty-state" style="color: var(--danger);">Unable to load records.</li>';
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSystemStatus();
+            loadPeopleList();
+
+            const personForm = document.getElementById('personForm');
+            if (personForm) {
+                personForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    const nameVal = document.getElementById('name').value.trim();
+                    const emailVal = document.getElementById('email').value.trim();
+
+                    fetch(`${API_BASE}/api/v1/people`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: nameVal, email: emailVal })
+                    })
+                    .then(async res => {
+                        const data = await res.json();
+                        if (!res.ok || data.status === 'error') {
+                            throw new Error(data.message || 'Submission failed.');
+                        }
+                        return data;
+                    })
+                    .then(data => {
+                        personForm.reset();
+                        loadPeopleList();
+                        loadSystemStatus();
+                    })
+                    .catch(err => {
+                        console.error("Error submitting entry:", err);
+                        alert("Error saving record: " + err.message);
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
