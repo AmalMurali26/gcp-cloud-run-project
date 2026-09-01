@@ -32,3 +32,6 @@ steps:
 images:
   - 'asia-south1-docker.pkg.dev/$PROJECT_ID/learn-gcp-repo-backend/backend:$COMMIT_SHA'
   - 'asia-south1-docker.pkg.dev/$PROJECT_ID/learn-gcp-repo-frontend/frontend:$COMMIT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
