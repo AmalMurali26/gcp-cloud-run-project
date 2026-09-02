@@ -56,6 +56,7 @@ steps:
       - '--allow-unauthenticated'
       - '--port=8080'
       - '--add-cloudsql-instances=$PROJECT_ID:asia-south1:gcp-learning-cloud-sql'
+      - '--remove-env-vars=POSTGRES_PASSWORD'
       - '--update-env-vars=DB_HOST=/cloudsql/$PROJECT_ID:asia-south1:gcp-learning-cloud-sql,POSTGRES_DB=postgres,POSTGRES_USER=postgres,REDIS_HOST=127.0.0.1,REDIS_PORT=6379'
       - '--set-secrets=POSTGRES_PASSWORD=postgres-password:latest'
 
