@@ -1,0 +1,53 @@
+steps:
+  # 1. Build Backend Image
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: 'backend'
+    args:
+      - 'build'
+      - '-t'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/learn-gcp-repo-backend/backend:$COMMIT_SHA'
+      - '-t'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/learn-gcp-repo-backend/backend:latest'
+      - '.'
+
+  # 2. Push Backend Image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/learn-gcp-repo-backend/backend:$COMMIT_SHA'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/learn-gcp-repo-backend/backend:latest'
+
+  # 3. Deploy Backend Service to Cloud Run with GCS Volume Mount & Direct VPC
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'backend-service'
+      - '--image=asia-south1-docker.pkg.dev/$PROJECT_ID/learn-gcp-repo-backend/backend:$COMMIT_SHA'
+      - '--region=asia-south1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--port=8080'
+      - '--ingress=internal-and-cloud-load-balancing'
+      - '--network=first-project-vpc'
+      - '--subnet=first-subnet'
+      - '--vpc-egress=private-ranges-only'
+      - '--min-instances=1'
+      - '--max-instances=1'
+      - '--add-volume=name=redis-volume,type=cloud-storage,bucket=redis-backup-$PROJECT_ID'
+      - '--add-volume-mount=volume=redis-volume,mount-path=/mnt/redis-data'
+      - '--add-cloudsql-instances=$PROJECT_ID:asia-south1:gcp-learning-cloud-sql'
+      - '--remove-env-vars=POSTGRES_PASSWORD'
+      - '--update-env-vars=DB_HOST=/cloudsql/$PROJECT_ID:asia-south1:gcp-learning-cloud-sql,POSTGRES_DB=postgres,POSTGRES_USER=postgres,REDIS_HOST=127.0.0.1,REDIS_PORT=6379'
+      - '--set-secrets=POSTGRES_PASSWORD=postgres-password:latest'
+
+images:
+  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/learn-gcp-repo-backend/backend:$COMMIT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
