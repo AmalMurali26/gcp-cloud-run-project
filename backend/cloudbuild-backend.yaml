@@ -39,7 +39,7 @@ steps:
       - '--vpc-egress=private-ranges-only'
       - '--min-instances=1'
       - '--max-instances=1'
-      - '--add-volume=name=redis-volume,type=cloud-storage,bucket=redis-backup-$PROJECT_ID'
+      - '--add-volume=name=redis-volume,type=cloud-storage,bucket=redis-backup-cloud-run'
       - '--add-volume-mount=volume=redis-volume,mount-path=/mnt/redis-data'
       - '--add-cloudsql-instances=$PROJECT_ID:asia-south1:gcp-learning-cloud-sql'
       - '--remove-env-vars=POSTGRES_PASSWORD'
