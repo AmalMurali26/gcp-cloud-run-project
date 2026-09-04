@@ -1,5 +1,6 @@
 import os
 import time
+import math
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -89,7 +90,6 @@ def read_data():
         try:
             redis_client.bgsave()
         except Exception as save_err:
-            # Handle case where background save is already in progress
             logger.warning(f"Redis bgsave skipped or in progress: {save_err}")
     except Exception as e:
         logger.error(f"Redis error: {e}")
@@ -139,3 +139,31 @@ def get_people():
     except Exception as e:
         logger.error(f"DB Fetch Error: {e}")
         return {"status": "error", "message": "Failed to retrieve records."}
+
+# --- Test Endpoints for Alert Simulation ---
+
+@app.get("/api/v1/test/cpu-load")
+def trigger_cpu_load(seconds: int = 45):
+    end_time = time.time() + seconds
+    while time.time() < end_time:
+        _ = [math.sqrt(x) for x in range(1000)]
+    return {"status": "success", "message": f"Consumed CPU for {seconds} seconds"}
+
+memory_leak_simulator = []
+
+@app.get("/api/v1/test/memory-load")
+def trigger_memory_load(megabytes: int = 250):
+    global memory_leak_simulator
+    for _ in range(megabytes):
+        memory_leak_simulator.append(b"x" * (1024 * 1024))
+    return {
+        "status": "success",
+        "allocated_mb": megabytes,
+        "total_chunks": len(memory_leak_simulator),
+    }
+
+@app.get("/api/v1/test/memory-clear")
+def clear_memory():
+    global memory_leak_simulator
+    memory_leak_simulator.clear()
+    return {"status": "success", "message": "Simulated memory cleared"}
