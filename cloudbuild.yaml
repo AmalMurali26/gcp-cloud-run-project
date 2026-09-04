@@ -56,7 +56,6 @@ steps:
       - '--allow-unauthenticated'
       - '--port=8080'
       - '--ingress=internal-and-cloud-load-balancing'
-      - '--network=default'
       - '--subnet=first-subnet'
       - '--vpc-egress=private-ranges-only'
       - '--add-cloudsql-instances=$PROJECT_ID:asia-south1:gcp-learning-cloud-sql'
@@ -77,7 +76,6 @@ steps:
       - '--allow-unauthenticated'
       - '--port=80'
       - '--ingress=internal-and-cloud-load-balancing'
-      - '--network=default'
       - '--subnet=first-subnet'
       - '--vpc-egress=all-traffic'
 
