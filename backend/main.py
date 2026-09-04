@@ -86,6 +86,11 @@ def health_check():
 def read_data():
     try:
         hits = redis_client.incr("hits")
+        try:
+            redis_client.bgsave()
+        except Exception as save_err:
+            # Handle case where background save is already in progress
+            logger.warning(f"Redis bgsave skipped or in progress: {save_err}")
     except Exception as e:
         logger.error(f"Redis error: {e}")
         hits = "Redis Connection Error"
